@@ -1,0 +1,741 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>A/L Resource Hub — Past Papers & Training</title>
+    <style>
+        /* ── CSS Variables ── */
+        :root {
+            --primary: #3b82f6;
+            --primary-glow: rgba(59, 130, 246, 0.25);
+            --card-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+
+            /* Dark mode defaults */
+            --bg-body: #0f172a;
+            --bg-gradient: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            --accent-color: #3b82f6;
+            --card-bg: rgba(30, 41, 59, 0.7);
+            --card-border: rgba(255, 255, 255, 0.07);
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --lbl-bg: rgba(255, 255, 255, 0.02);
+            --lbl-border: rgba(255, 255, 255, 0.1);
+        }
+
+        /* Light mode */
+        body.light-mode {
+            --bg-body: #f8fafc;
+            --bg-gradient: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);
+            --card-bg: rgba(255, 255, 255, 0.9);
+            --card-border: rgba(0, 0, 0, 0.08);
+            --text-main: #0f172a;
+            --text-muted: #64748b;
+            --lbl-bg: #f8fafc;
+            --lbl-border: #cbd5e1;
+        }
+
+        /* Subject themes — dark */
+        body.theme-physics:not(.light-mode)   { --bg-gradient: linear-gradient(135deg, #0b1528 0%, #1e1b4b 50%, #0f172a 100%); --accent-color: #6366f1; }
+        body.theme-chemistry:not(.light-mode) { --bg-gradient: linear-gradient(135deg, #061f14 0%, #022c22 50%, #0f172a 100%); --accent-color: #10b981; }
+        body.theme-biology:not(.light-mode)   { --bg-gradient: linear-gradient(135deg, #2a0812 0%, #4c0519 50%, #0f172a 100%); --accent-color: #f43f5e; }
+        body.theme-maths:not(.light-mode)     { --bg-gradient: linear-gradient(135deg, #0a1628 0%, #1a2744 50%, #0f172a 100%); --accent-color: #8b5cf6; }
+
+        /* Subject themes — light */
+        body.theme-physics.light-mode   { --bg-gradient: linear-gradient(135deg, #f0f3ff 0%, #e0e7ff 100%); --accent-color: #4f46e5; }
+        body.theme-chemistry.light-mode { --bg-gradient: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%); --accent-color: #059669; }
+        body.theme-biology.light-mode   { --bg-gradient: linear-gradient(135deg, #fff1f2 0%, #ffe4e6 100%); --accent-color: #e11d48; }
+        body.theme-maths.light-mode     { --bg-gradient: linear-gradient(135deg, #f5f3ff 0%, #ede9fe 100%); --accent-color: #7c3aed; }
+
+        /* ── Reset & Base ── */
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, sans-serif;
+            background: var(--bg-gradient);
+            color: var(--text-main);
+            min-height: 100vh;
+            transition: background 0.5s ease, color 0.3s ease;
+            overflow-x: hidden;
+        }
+
+        /* ── Ambient bg glow ── */
+        .bg-orb {
+            position: fixed; border-radius: 50%;
+            pointer-events: none; z-index: 0;
+            filter: blur(90px);
+            transition: background 0.6s;
+        }
+        .bg-orb-1 {
+            width: 500px; height: 500px;
+            top: -100px; right: -100px;
+            background: radial-gradient(circle, rgba(99,102,241,0.18) 0%, transparent 70%);
+            animation: driftA 12s ease-in-out infinite alternate;
+        }
+        .bg-orb-2 {
+            width: 400px; height: 400px;
+            bottom: -80px; left: -80px;
+            background: radial-gradient(circle, rgba(59,130,246,0.12) 0%, transparent 70%);
+            animation: driftB 15s ease-in-out infinite alternate;
+        }
+        @keyframes driftA { 0% { transform: translate(0,0) scale(1); } 100% { transform: translate(30px, 40px) scale(1.15); } }
+        @keyframes driftB { 0% { transform: translate(0,0) scale(1); } 100% { transform: translate(-20px, -30px) scale(1.1); } }
+
+        /* ── Layout ── */
+        .container { max-width: 980px; margin: 0 auto; padding: 40px 20px; position: relative; z-index: 1; }
+
+        /* ── Page Header ── */
+        .page-header { text-align: center; margin-bottom: 48px; }
+        .page-header h1 {
+            font-size: 44px; font-weight: 900; letter-spacing: -1.5px; line-height: 1.1;
+            background: linear-gradient(135deg, var(--text-main) 30%, var(--accent-color) 100%);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 10px;
+        }
+        body.light-mode .page-header h1 {
+            background: linear-gradient(135deg, #0f172a 30%, var(--accent-color) 100%);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .page-header p { color: var(--text-muted); font-size: 17px; }
+
+        /* ── SPA Screens ── */
+        .app-screen { display: none; opacity: 0; transform: scale(0.98) translateY(10px); transition: opacity 0.35s ease, transform 0.35s ease; }
+        .app-screen.active { display: block; opacity: 1; transform: scale(1) translateY(0); }
+
+        /* ── Section Tabs (Dashboard Level 1) ── */
+        .section-tabs { display: flex; gap: 12px; justify-content: center; margin-bottom: 40px; flex-wrap: wrap; }
+        .section-tab {
+            padding: 13px 28px; border-radius: 50px;
+            border: 1.5px solid var(--card-border);
+            background: var(--card-bg);
+            backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+            color: var(--text-muted); font-size: 15px; font-weight: 600;
+            cursor: pointer; transition: all 0.25s ease;
+        }
+        .section-tab:hover { border-color: var(--accent-color); color: var(--text-main); }
+        .section-tab.active { background: var(--accent-color); border-color: var(--accent-color); color: #fff; }
+
+        /* ── Subject Cards ── */
+        .subject-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 18px; }
+        .subject-card {
+            background: var(--card-bg); border: 2px solid var(--card-border);
+            backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+            border-radius: 24px; padding: 38px 16px; text-align: center;
+            cursor: pointer; box-shadow: var(--card-shadow);
+            transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
+            position: relative; overflow: hidden;
+        }
+        .subject-card::before {
+            content: ''; position: absolute; inset: 0; border-radius: 22px;
+            background: radial-gradient(circle at 50% 0%, var(--c-glow, rgba(99,102,241,0.12)) 0%, transparent 70%);
+            opacity: 0; transition: opacity 0.35s;
+        }
+        .subject-card:hover { transform: translateY(-9px); border-color: var(--c-accent, var(--accent-color)); box-shadow: 0 22px 45px rgba(0,0,0,0.18); }
+        .subject-card:hover::before { opacity: 1; }
+        .subject-card .icon { font-size: 46px; margin-bottom: 14px; display: block; transition: transform 0.3s; }
+        .subject-card:hover .icon { transform: scale(1.15) rotate(4deg); }
+        .subject-card h3 { font-size: 19px; font-weight: 800; color: var(--text-main); }
+        .subject-card .sub-label { font-size: 12px; color: var(--text-muted); margin-top: 6px; letter-spacing: 0.5px; }
+
+        /* per-subject accent colors */
+        .card-physics   { --c-accent: #6366f1; --c-glow: rgba(99,102,241,0.15); }
+        .card-chemistry { --c-accent: #10b981; --c-glow: rgba(16,185,129,0.15); }
+        .card-biology   { --c-accent: #f43f5e; --c-glow: rgba(244,63,94,0.15); }
+        .card-maths     { --c-accent: #8b5cf6; --c-glow: rgba(139,92,246,0.15); }
+
+        /* ── Back Nav ── */
+        .back-nav { display: flex; justify-content: space-between; align-items: center; margin-bottom: 28px; }
+        .btn-back {
+            background: var(--lbl-bg); border: 1.5px solid var(--card-border);
+            color: var(--text-main); padding: 10px 20px; border-radius: 10px;
+            cursor: pointer; font-weight: 600; font-size: 14px; transition: all 0.2s;
+            display: flex; align-items: center; gap: 7px;
+        }
+        .btn-back:hover { background: rgba(128,128,128,0.2); border-color: var(--accent-color); }
+        .breadcrumb { font-size: 13px; color: var(--text-muted); display: flex; gap: 6px; align-items: center; }
+        .breadcrumb span { color: var(--text-main); font-weight: 600; }
+
+        /* ── Section Headers ── */
+        .screen-title { font-size: 28px; font-weight: 800; letter-spacing: -0.5px; margin-bottom: 6px; }
+        .screen-sub { font-size: 15px; color: var(--text-muted); margin-bottom: 24px; }
+
+        /* ── Years Grid ── */
+        .years-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 13px; margin-top: 10px; }
+        .year-btn {
+            background: var(--card-bg); border: 1.5px solid var(--card-border);
+            backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+            color: var(--text-main); padding: 18px 10px;
+            border-radius: 14px; font-size: 18px; font-weight: 800;
+            cursor: pointer; text-align: center; transition: all 0.25s ease;
+        }
+        .year-btn:hover { background: var(--accent-color); border-color: transparent; color: #fff; transform: translateY(-3px); box-shadow: 0 8px 20px rgba(0,0,0,0.2); }
+
+        /* ── Part Buttons ── */
+        .parts-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; margin-top: 10px; }
+        .parts-grid.four-cols { grid-template-columns: repeat(2, 1fr); }
+        .part-btn {
+            background: var(--card-bg); border: 2px solid var(--card-border);
+            backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+            color: var(--text-main); padding: 28px 16px;
+            border-radius: 18px; font-size: 17px; font-weight: 800;
+            cursor: pointer; text-align: center; transition: all 0.3s ease;
+            box-shadow: var(--card-shadow); position: relative; overflow: hidden;
+        }
+        .part-btn .part-icon { font-size: 30px; display: block; margin-bottom: 10px; }
+        .part-btn .part-desc { font-size: 12px; color: var(--text-muted); font-weight: 500; margin-top: 4px; }
+        .part-btn:hover { background: var(--accent-color); border-color: transparent; color: #fff; transform: translateY(-5px); box-shadow: 0 16px 35px rgba(0,0,0,0.2); }
+        .part-btn:hover .part-desc { color: rgba(255,255,255,0.8); }
+
+        /* ── PDF Viewer ── */
+        .pdf-viewer-wrap {
+            background: var(--card-bg); border: 1.5px solid var(--card-border);
+            backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+            border-radius: 20px; padding: 28px; box-shadow: var(--card-shadow); margin-top: 10px;
+        }
+        .pdf-viewer-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px; flex-wrap: wrap; gap: 12px; }
+        .pdf-title { font-size: 20px; font-weight: 800; }
+        .pdf-meta { font-size: 13px; color: var(--text-muted); margin-top: 3px; }
+        .pdf-actions { display: flex; gap: 10px; flex-wrap: wrap; }
+        .btn-download {
+            background: linear-gradient(135deg, var(--accent-color), #1d4ed8);
+            color: #fff; border: none; padding: 11px 22px; border-radius: 11px;
+            font-size: 14px; font-weight: 700; cursor: pointer;
+            transition: all 0.2s; box-shadow: 0 4px 14px rgba(0,0,0,0.2);
+            display: flex; align-items: center; gap: 7px;
+        }
+        .btn-download:hover { transform: translateY(-2px); box-shadow: 0 10px 24px rgba(0,0,0,0.25); }
+        .btn-open-new {
+            background: var(--lbl-bg); border: 1.5px solid var(--card-border);
+            color: var(--text-main); padding: 11px 18px; border-radius: 11px;
+            font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.2s;
+            display: flex; align-items: center; gap: 7px;
+        }
+        .btn-open-new:hover { border-color: var(--accent-color); }
+        .pdf-embed-area {
+            width: 100%; height: 600px; border: 1.5px solid var(--card-border);
+            border-radius: 12px; overflow: hidden; background: #1e293b;
+            display: flex; align-items: center; justify-content: center;
+            flex-direction: column; gap: 12px; color: var(--text-muted);
+        }
+        .pdf-embed-area iframe { width: 100%; height: 100%; border: none; }
+        .pdf-placeholder { text-align: center; padding: 40px; }
+        .pdf-placeholder .big-icon { font-size: 56px; margin-bottom: 16px; display: block; }
+        .pdf-placeholder p { font-size: 15px; color: var(--text-muted); line-height: 1.6; max-width: 380px; margin: 0 auto; }
+        .pdf-placeholder .pdf-url {
+            margin-top: 18px; padding: 12px 18px; background: var(--lbl-bg);
+            border: 1px solid var(--card-border); border-radius: 10px;
+            font-size: 13px; color: var(--accent-color); word-break: break-all;
+            font-family: monospace;
+        }
+
+        /* ── Marking Schemes section ── */
+        .ms-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 18px; }
+        .ms-card {
+            background: var(--card-bg); border: 2px solid var(--card-border);
+            backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+            border-radius: 20px; padding: 28px 16px; text-align: center;
+            cursor: pointer; box-shadow: var(--card-shadow);
+            transition: all 0.35s cubic-bezier(0.165, 0.84, 0.44, 1);
+        }
+        .ms-card:hover { transform: translateY(-7px); border-color: var(--c-accent, var(--accent-color)); }
+        .ms-card .icon { font-size: 36px; margin-bottom: 12px; display: block; }
+        .ms-card h3 { font-size: 16px; font-weight: 700; }
+
+        /* ── Questions Training section ── */
+        .qbt-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; }
+        .qbt-card {
+            background: var(--card-bg); border: 2px solid var(--card-border);
+            backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+            border-radius: 20px; padding: 30px 20px; text-align: center;
+            cursor: pointer; box-shadow: var(--card-shadow);
+            transition: all 0.35s cubic-bezier(0.165, 0.84, 0.44, 1);
+        }
+        .qbt-card:hover { transform: translateY(-7px); border-color: var(--c-accent, var(--accent-color)); }
+        .qbt-card .icon { font-size: 40px; margin-bottom: 14px; display: block; }
+        .qbt-card h3 { font-size: 18px; font-weight: 800; margin-bottom: 6px; }
+        .qbt-card p { font-size: 13px; color: var(--text-muted); line-height: 1.5; }
+
+        /* ── "Coming soon" badge ── */
+        .badge-soon {
+            display: inline-block; margin-top: 10px; padding: 3px 10px;
+            background: rgba(245,158,11,0.15); border: 1px solid rgba(245,158,11,0.3);
+            color: #f59e0b; border-radius: 20px; font-size: 11px; font-weight: 700; letter-spacing: 0.5px;
+        }
+
+        /* ── Info banner ── */
+        .info-banner {
+            background: rgba(59,130,246,0.08); border: 1px solid rgba(59,130,246,0.2);
+            border-radius: 14px; padding: 16px 20px; margin-bottom: 24px;
+            display: flex; align-items: flex-start; gap: 12px; font-size: 14px; color: var(--text-muted);
+        }
+        .info-banner .ib-icon { font-size: 18px; flex-shrink: 0; margin-top: 1px; }
+
+        /* ── Theme FAB ── */
+        .theme-fab {
+            position: fixed; bottom: 25px; right: 25px; z-index: 999;
+            width: 52px; height: 52px; border-radius: 50%;
+            background: var(--accent-color); border: none; color: #fff;
+            font-size: 22px; cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
+            box-shadow: 0 6px 20px rgba(0,0,0,0.3); transition: transform 0.2s;
+        }
+        .theme-fab:hover { transform: scale(1.12); }
+
+        /* ── Divider ── */
+        .divider { height: 1px; background: var(--card-border); margin: 36px 0; }
+
+        /* ── Responsive ── */
+        @media (max-width: 900px) {
+            .subject-grid { grid-template-columns: repeat(2, 1fr); gap: 14px; }
+            .ms-grid { grid-template-columns: repeat(2, 1fr); }
+            .qbt-grid { grid-template-columns: 1fr; }
+            .years-grid { grid-template-columns: repeat(auto-fill, minmax(90px, 1fr)); gap: 10px; }
+            .parts-grid { grid-template-columns: 1fr; }
+            .parts-grid.four-cols { grid-template-columns: repeat(2, 1fr); }
+            .pdf-embed-area { height: 420px; }
+            .page-header h1 { font-size: 30px; }
+        }
+        @media (max-width: 480px) {
+            .subject-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+            .subject-card { padding: 28px 10px; }
+            .subject-card .icon { font-size: 36px; }
+            .subject-card h3 { font-size: 16px; }
+            .section-tabs { gap: 8px; }
+            .section-tab { padding: 10px 18px; font-size: 14px; }
+            .parts-grid.four-cols { grid-template-columns: 1fr 1fr; }
+            .container { padding: 24px 14px; }
+        }
+    </style>
+</head>
+<body class="theme-home">
+
+<!-- ambient orbs -->
+<div class="bg-orb bg-orb-1"></div>
+<div class="bg-orb bg-orb-2"></div>
+
+<!-- Theme toggle -->
+<button class="theme-fab" id="themeFab" title="Toggle light/dark mode" aria-label="Toggle theme">🌙</button>
+
+<div class="container">
+
+    <!-- Page Header -->
+    <div class="page-header">
+        <h1>A/L Resource Hub</h1>
+        <p>Past Papers · Marking Schemes · Question-Based Training</p>
+    </div>
+
+    <!-- ════════════════════════════════════════
+         SCREEN 1 — Main Dashboard
+    ════════════════════════════════════════ -->
+    <div class="app-screen active" id="screen-dashboard">
+
+        <!-- Section tabs -->
+        <div class="section-tabs">
+            <button class="section-tab active" onclick="switchTab(this,'past-papers')">📄 Past Papers</button>
+            <button class="section-tab" onclick="switchTab(this,'marking-schemes')">✅ Marking Schemes</button>
+            <button class="section-tab" onclick="switchTab(this,'qbt')">🧠 Questions Training</button>
+        </div>
+
+        <!-- ─── Past Papers panel ─── -->
+        <div id="panel-past-papers">
+            <div class="subject-grid">
+                <div class="subject-card card-physics" onclick="openSubject('physics','pp')">
+                    <span class="icon">⚛️</span>
+                    <h3>Physics</h3>
+                    <div class="sub-label">2000 – 2025</div>
+                </div>
+                <div class="subject-card card-chemistry" onclick="openSubject('chemistry','pp')">
+                    <span class="icon">🧪</span>
+                    <h3>Chemistry</h3>
+                    <div class="sub-label">2000 – 2025</div>
+                </div>
+                <div class="subject-card card-biology" onclick="openSubject('biology','pp')">
+                    <span class="icon">🧬</span>
+                    <h3>Biology</h3>
+                    <div class="sub-label">2000 – 2025</div>
+                </div>
+                <div class="subject-card card-maths" onclick="openSubject('maths','pp')">
+                    <span class="icon">📐</span>
+                    <h3>Combined Maths</h3>
+                    <div class="sub-label">2000 – 2025</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ─── Marking Schemes panel ─── -->
+        <div id="panel-marking-schemes" style="display:none;">
+            <div class="info-banner">
+                <span class="ib-icon">💡</span>
+                <div>Select a subject to browse official marking schemes by year. Each scheme opens as an embedded PDF with a download option.</div>
+            </div>
+            <div class="ms-grid">
+                <div class="subject-card card-physics" onclick="openSubject('physics','ms')">
+                    <span class="icon">⚛️</span>
+                    <h3>Physics</h3>
+                    <div class="sub-label">Marking Schemes</div>
+                </div>
+                <div class="subject-card card-chemistry" onclick="openSubject('chemistry','ms')">
+                    <span class="icon">🧪</span>
+                    <h3>Chemistry</h3>
+                    <div class="sub-label">Marking Schemes</div>
+                </div>
+                <div class="subject-card card-biology" onclick="openSubject('biology','ms')">
+                    <span class="icon">🧬</span>
+                    <h3>Biology</h3>
+                    <div class="sub-label">Marking Schemes</div>
+                </div>
+                <div class="subject-card card-maths" onclick="openSubject('maths','ms')">
+                    <span class="icon">📐</span>
+                    <h3>Combined Maths</h3>
+                    <div class="sub-label">Marking Schemes</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ─── Question-Based Training panel ─── -->
+        <div id="panel-qbt" style="display:none;">
+            <div class="info-banner">
+                <span class="ib-icon">🚀</span>
+                <div>AI-powered question-based training coming soon. Choose a subject to begin timed practice with instant feedback.</div>
+            </div>
+            <div class="qbt-grid">
+                <div class="qbt-card card-physics">
+                    <span class="icon">⚛️</span>
+                    <h3>Physics</h3>
+                    <p>Mechanics, Waves, Electricity & more — topic-by-topic MCQ drills</p>
+                    <div class="badge-soon">COMING SOON</div>
+                </div>
+                <div class="qbt-card card-chemistry">
+                    <span class="icon">🧪</span>
+                    <h3>Chemistry</h3>
+                    <p>Organic, Inorganic & Physical chemistry question banks</p>
+                    <div class="badge-soon">COMING SOON</div>
+                </div>
+                <div class="qbt-card card-biology">
+                    <span class="icon">🧬</span>
+                    <h3>Biology</h3>
+                    <p>Botany, Zoology & Human Physiology targeted practice</p>
+                    <div class="badge-soon">COMING SOON</div>
+                </div>
+            </div>
+        </div>
+
+    </div><!-- /screen-dashboard -->
+
+
+    <!-- ════════════════════════════════════════
+         SCREEN 2 — Year Selection
+    ════════════════════════════════════════ -->
+    <div class="app-screen" id="screen-years">
+        <div class="back-nav">
+            <button class="btn-back" onclick="goBack('dashboard')">← Back</button>
+            <div class="breadcrumb" id="bc-years"></div>
+        </div>
+        <div class="screen-title" id="years-title"></div>
+        <div class="screen-sub" id="years-sub">Select a year to view the paper</div>
+        <div class="years-grid" id="years-grid"></div>
+    </div>
+
+
+    <!-- ════════════════════════════════════════
+         SCREEN 3a — Part Selection (Physics/Chem/Bio)
+    ════════════════════════════════════════ -->
+    <div class="app-screen" id="screen-parts">
+        <div class="back-nav">
+            <button class="btn-back" onclick="goBack('years')">← Back</button>
+            <div class="breadcrumb" id="bc-parts"></div>
+        </div>
+        <div class="screen-title" id="parts-title"></div>
+        <div class="screen-sub">Choose a part to open the PDF</div>
+        <div class="parts-grid" id="parts-grid"></div>
+    </div>
+
+
+    <!-- ════════════════════════════════════════
+         SCREEN 3b — Part Selection (Combined Maths)
+    ════════════════════════════════════════ -->
+    <div class="app-screen" id="screen-maths-parts">
+        <div class="back-nav">
+            <button class="btn-back" onclick="goBack('years')">← Back</button>
+            <div class="breadcrumb" id="bc-maths"></div>
+        </div>
+        <div class="screen-title" id="maths-title"></div>
+        <div class="screen-sub">Choose Pure or Applied section</div>
+        <div class="parts-grid four-cols" id="maths-parts-grid"></div>
+    </div>
+
+
+    <!-- ════════════════════════════════════════
+         SCREEN 4 — PDF Viewer
+    ════════════════════════════════════════ -->
+    <div class="app-screen" id="screen-pdf">
+        <div class="back-nav">
+            <button class="btn-back" id="pdf-back-btn" onclick="goBack('parts')">← Back</button>
+            <div class="breadcrumb" id="bc-pdf"></div>
+        </div>
+        <div class="pdf-viewer-wrap">
+            <div class="pdf-viewer-header">
+                <div>
+                    <div class="pdf-title" id="pdf-title"></div>
+                    <div class="pdf-meta" id="pdf-meta"></div>
+                </div>
+                <div class="pdf-actions">
+                    <a id="pdf-download-link" href="#" download>
+                        <button class="btn-download">⬇ Download PDF</button>
+                    </a>
+                    <a id="pdf-open-link" href="#" target="_blank" rel="noopener">
+                        <button class="btn-open-new">↗ Open in new tab</button>
+                    </a>
+                </div>
+            </div>
+            <div class="pdf-embed-area" id="pdf-embed-area">
+                <div class="pdf-placeholder">
+                    <span class="big-icon">📄</span>
+                    <p>The PDF will be embedded here once you configure your file paths. Add your hosted PDF URLs to the <code>getPdfUrl()</code> function in the script.</p>
+                    <div class="pdf-url" id="pdf-url-display"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div><!-- /container -->
+
+<script>
+/* ══════════════════════════════════════════════════════
+   STATE
+══════════════════════════════════════════════════════ */
+let state = {
+    section: 'pp',   // 'pp' | 'ms'
+    subject: null,   // 'physics' | 'chemistry' | 'biology' | 'maths'
+    year: null,
+    part: null,
+    prevScreen: null
+};
+
+/* ══════════════════════════════════════════════════════
+   PDF URL BUILDER
+   ➜ Replace this function with your actual file paths/CDN URLs.
+   Example structure shown below.
+══════════════════════════════════════════════════════ */
+function getPdfUrl(subject, year, part, section) {
+    // section: 'pp' = past paper, 'ms' = marking scheme
+    const base = 'al-papers';      // relative folder inside this same repo
+    const secFolder = section === 'ms' ? 'marking-schemes' : 'past-papers';
+
+    if (subject === 'maths') {
+        // part: 'pure-a' | 'pure-b' | 'applied-a' | 'applied-b'
+        return `${base}/combined-maths/${secFolder}/${year}/${part}.pdf`;
+    } else {
+        // part: 'part1' | 'part2'
+        return `${base}/${subject}/${secFolder}/${year}/${part}.pdf`;
+    }
+}
+
+/* ══════════════════════════════════════════════════════
+   SCREEN MANAGEMENT
+══════════════════════════════════════════════════════ */
+function showScreen(id) {
+    document.querySelectorAll('.app-screen').forEach(s => s.classList.remove('active'));
+    const el = document.getElementById(id);
+    // brief delay for animation
+    setTimeout(() => el.classList.add('active'), 30);
+}
+
+function goBack(target) {
+    if (target === 'dashboard') {
+        applyTheme(null);
+        showScreen('screen-dashboard');
+    } else if (target === 'years') {
+        showScreen('screen-years');
+    } else if (target === 'parts') {
+        if (state.subject === 'maths') {
+            showScreen('screen-maths-parts');
+        } else {
+            showScreen('screen-parts');
+        }
+    }
+}
+
+/* ══════════════════════════════════════════════════════
+   TAB SWITCHING
+══════════════════════════════════════════════════════ */
+function switchTab(btn, panel) {
+    document.querySelectorAll('.section-tab').forEach(t => t.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('panel-past-papers').style.display     = panel === 'past-papers'     ? '' : 'none';
+    document.getElementById('panel-marking-schemes').style.display = panel === 'marking-schemes' ? '' : 'none';
+    document.getElementById('panel-qbt').style.display             = panel === 'qbt'             ? '' : 'none';
+}
+
+/* ══════════════════════════════════════════════════════
+   SUBJECT CONFIG
+══════════════════════════════════════════════════════ */
+const SUBJECTS = {
+    physics:   { label: 'Physics',         emoji: '⚛️',  theme: 'theme-physics'   },
+    chemistry: { label: 'Chemistry',       emoji: '🧪',  theme: 'theme-chemistry' },
+    biology:   { label: 'Biology',         emoji: '🧬',  theme: 'theme-biology'   },
+    maths:     { label: 'Combined Maths',  emoji: '📐',  theme: 'theme-maths'     }
+};
+
+const YEARS = Array.from({ length: 26 }, (_, i) => 2000 + i); // 2000–2025
+
+/* ══════════════════════════════════════════════════════
+   STEP 1 — Open subject → Year grid
+══════════════════════════════════════════════════════ */
+function openSubject(subject, section) {
+    state.subject = subject;
+    state.section = section;
+
+    const cfg = SUBJECTS[subject];
+    const secLabel = section === 'ms' ? 'Marking Schemes' : 'Past Papers';
+
+    applyTheme(cfg.theme);
+
+    // Breadcrumb
+    document.getElementById('bc-years').innerHTML =
+        `Home / ${cfg.emoji} ${cfg.label} / <span>${secLabel}</span>`;
+
+    // Title
+    document.getElementById('years-title').textContent = `${cfg.emoji} ${cfg.label} — ${secLabel}`;
+    document.getElementById('years-sub').textContent   = 'Select a year to continue';
+
+    // Build year buttons
+    const grid = document.getElementById('years-grid');
+    grid.innerHTML = YEARS.map(y =>
+        `<button class="year-btn" onclick="openYear(${y})">${y}</button>`
+    ).join('');
+
+    showScreen('screen-years');
+}
+
+/* ══════════════════════════════════════════════════════
+   STEP 2 — Year selected → Parts screen
+══════════════════════════════════════════════════════ */
+function openYear(year) {
+    state.year = year;
+    const cfg = SUBJECTS[state.subject];
+    const secLabel = state.section === 'ms' ? 'Marking Scheme' : 'Past Paper';
+
+    if (state.subject === 'maths') {
+        // Four-way split for maths
+        document.getElementById('bc-maths').innerHTML =
+            `Home / ${cfg.emoji} Combined Maths / ${state.section.toUpperCase()} / <span>${year}</span>`;
+        document.getElementById('maths-title').textContent = `${cfg.emoji} ${year} Combined Maths — ${secLabel}`;
+
+        const parts = [
+            { key: 'pure-a',    label: 'Pure — Part A', icon: '📘', desc: 'Section A' },
+            { key: 'pure-b',    label: 'Pure — Part B', icon: '📗', desc: 'Section B' },
+            { key: 'applied-a', label: 'Applied — Part A', icon: '📙', desc: 'Section A' },
+            { key: 'applied-b', label: 'Applied — Part B', icon: '📕', desc: 'Section B' },
+        ];
+        document.getElementById('maths-parts-grid').innerHTML = parts.map(p =>
+            `<button class="part-btn" onclick="openPdf('${p.key}')">
+                <span class="part-icon">${p.icon}</span>
+                ${p.label}
+                <div class="part-desc">${p.desc}</div>
+            </button>`
+        ).join('');
+
+        showScreen('screen-maths-parts');
+    } else {
+        // Part 1 / Part 2
+        document.getElementById('bc-parts').innerHTML =
+            `Home / ${cfg.emoji} ${cfg.label} / ${state.section.toUpperCase()} / <span>${year}</span>`;
+        document.getElementById('parts-title').textContent = `${cfg.emoji} ${cfg.label} ${year} — ${secLabel}`;
+
+        const parts = [
+            { key: 'part1', label: 'Part 1',  icon: '📄', desc: 'Multiple Choice Questions' },
+            { key: 'part2', label: 'Part 2',  icon: '📝', desc: 'Structured / Essay Questions' },
+        ];
+        document.getElementById('parts-grid').innerHTML = parts.map(p =>
+            `<button class="part-btn" onclick="openPdf('${p.key}')">
+                <span class="part-icon">${p.icon}</span>
+                ${p.label}
+                <div class="part-desc">${p.desc}</div>
+            </button>`
+        ).join('');
+
+        showScreen('screen-parts');
+    }
+}
+
+/* ══════════════════════════════════════════════════════
+   STEP 3 — Part selected → PDF Viewer
+══════════════════════════════════════════════════════ */
+function openPdf(partKey) {
+    state.part = partKey;
+
+    const cfg = SUBJECTS[state.subject];
+    const secLabel = state.section === 'ms' ? 'Marking Scheme' : 'Past Paper';
+
+    const PART_LABELS = {
+        'part1':     'Part 1 — MCQ',
+        'part2':     'Part 2 — Structured',
+        'pure-a':    'Pure Mathematics — Part A',
+        'pure-b':    'Pure Mathematics — Part B',
+        'applied-a': 'Applied Mathematics — Part A',
+        'applied-b': 'Applied Mathematics — Part B',
+    };
+
+    const pdfUrl = getPdfUrl(state.subject, state.year, partKey, state.section);
+
+    // Breadcrumb
+    document.getElementById('bc-pdf').innerHTML =
+        `Home / ${cfg.emoji} ${cfg.label} / ${state.year} / <span>${PART_LABELS[partKey]}</span>`;
+
+    // Header
+    document.getElementById('pdf-title').textContent =
+        `${cfg.emoji} ${cfg.label} ${state.year} — ${PART_LABELS[partKey]}`;
+    document.getElementById('pdf-meta').textContent =
+        `${secLabel} · Sri Lanka A/L Examination · ${state.year}`;
+
+    // Download + open links
+    document.getElementById('pdf-download-link').href = pdfUrl;
+    document.getElementById('pdf-open-link').href     = pdfUrl;
+
+    // Show PDF URL in placeholder
+    document.getElementById('pdf-url-display').textContent = pdfUrl;
+
+    // Embed
+    const area = document.getElementById('pdf-embed-area');
+    area.innerHTML = `
+        <div class="pdf-placeholder">
+            <span class="big-icon">📄</span>
+            <p>PDF ready to embed. Add your hosted file URL to <code>getPdfUrl()</code> in the script, then the paper will display here automatically.</p>
+            <div class="pdf-url">${pdfUrl}</div>
+        </div>`;
+
+    // Attempt iframe embed (works if same-origin or CORS-friendly host)
+    const iframe = document.createElement('iframe');
+    iframe.src = pdfUrl;
+    iframe.title = document.getElementById('pdf-title').textContent;
+    iframe.onload = () => { area.innerHTML = ''; area.appendChild(iframe); };
+    iframe.onerror = () => {}; // keep placeholder on error
+
+    // Back button context
+    document.getElementById('pdf-back-btn').onclick = () =>
+        goBack(state.subject === 'maths' ? 'parts' : 'parts');
+
+    showScreen('screen-pdf');
+}
+
+/* ══════════════════════════════════════════════════════
+   THEME
+══════════════════════════════════════════════════════ */
+function applyTheme(theme) {
+    document.body.classList.remove('theme-home','theme-physics','theme-chemistry','theme-biology','theme-maths');
+    if (theme) document.body.classList.add(theme);
+    else document.body.classList.add('theme-home');
+}
+
+const themeFab = document.getElementById('themeFab');
+themeFab.addEventListener('click', () => {
+    document.body.classList.toggle('light-mode');
+    themeFab.textContent = document.body.classList.contains('light-mode') ? '🌙' : '☀️';
+});
+// set correct icon on load
+themeFab.textContent = document.body.classList.contains('light-mode') ? '☀️' : '🌙';
+</script>
+</body>
+</html>
